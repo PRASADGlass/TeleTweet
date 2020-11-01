@@ -7,20 +7,16 @@
 
 __author__ = "Benny <benny.think@gmail.com>"
 
-import logging
 import tempfile
-import json
 
-from base64 import b64decode
 import telebot
 
-from config import bot_token, tweet_format
-from helper import can_use
+from config import BOT_TOKEN, tweet_format
+from helper import can_use, sign_in, init_enc, sign_off, is_sign_in
 from tweet import send_tweet
 
-logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(filename)s [%(levelname)s]: %(message)s')
-
-bot = telebot.TeleBot(bot_token)
+bot = telebot.TeleBot(BOT_TOKEN)
+init_enc()
 
 
 @bot.message_handler(commands=['start'])
@@ -28,37 +24,40 @@ def start_handler(message):
     bot.send_chat_action(message.chat.id, 'typing')
     msg = 'Welcome to TeleTweet. ' \
           'This bot will connect you from Telegram Bot to Twitter.' \
-          'Wanna get started now? Type /auth now!'
+          'Wanna get started now? Type /sign_in now!'
     bot.send_message(message.chat.id, msg)
 
 
-@bot.message_handler(commands=['auth'])
-def auth_handler(message):
-    bot.send_chat_action(message.chat.id, 'typing')
-    msg = 'Click this [link](https://teletweet.app) to auth you twitter.' \
-          ' When your auth is done, send auth code back to me'
-    bot.send_message(message.chat.id, msg, parse_mode='markdown')
+@bot.message_handler(commands=['sign_in'])
+def sign_in_handler(message):
+    if is_sign_in(message.chat.id):
+        bot.send_message(message.chat.id, "You have already signed in, no need to do it again.")
+        return
 
+    bot.send_chat_action(message.chat.id, 'typing')
+    msg = 'Click this [link](https://teletweet.app) to login in you twitter.' \
+          ' When your login in is done, send auth code back to me'
+    bot.send_message(message.chat.id, msg, parse_mode='markdown')
     bot.register_next_step_handler(message, add_auth)
 
 
 def add_auth(message):
     bot.send_chat_action(message.chat.id, 'typing')
-    try:
-        twitter_auth = b64decode(message.text)
-    except ValueError as e:
-        logging.error("Base64 decode failed %s", e)
-        bot.send_message(message.chat.id, f"Your token appears to be invalid.\n`{e}`", parse_mode='markdown')
+    msg = sign_in(str(message.chat.id), message.text)
+    bot.send_message(message.chat.id, msg, parse_mode='markdown')
+
+
+@bot.message_handler(commands=['sign_off'])
+def sign_off_handler(message):
+    bot.send_chat_action(message.chat.id, 'typing')
+    if not is_sign_in(str(message.chat.id)):
+        bot.send_message(message.chat.id, "Lazarus came back from the dead.\nYou haven't signed in yet.")
         return
 
-    with open("database.json") as f:
-        data: dict = json.load(f)
-        # json key must be str, so convert it here
-        data[str(message.chat.id)] = json.loads(twitter_auth)
-    with open("database.json", "w") as f:
-        json.dump(data, f, indent="\t")
-
-    bot.send_message(message.chat.id, f"Auth success!")
+    sign_off(str(message.chat.id))
+    msg = "I'm sorry to see you go. I have delete your oauth token." \
+          "By the way, you could also check [this link](https://twitter.com/settings/connected_apps)."
+    bot.send_message(message.chat.id, msg, parse_mode='markdown')
 
 
 @bot.message_handler(commands=['help'])
@@ -71,7 +70,7 @@ def help_handler(message):
 def tweet_text_handler(message):
     bot.send_chat_action(message.chat.id, 'typing')
     if not can_use(message.chat.id):
-        bot.send_message(message.chat.id, "Sorry, I can't find your auth data. Type /auth to auth.")
+        bot.send_message(message.chat.id, "Sorry, I can't find your auth data. Type /sign_in to try again.")
         return
 
     result = send_tweet(message.chat.id, message.text)
@@ -89,7 +88,7 @@ def tweet_text_handler(message):
 def tweet_photo_handler(message):
     bot.send_chat_action(message.chat.id, 'typing')
     if not can_use(message.chat.id):
-        bot.send_message(message.chat.id, "Sorry, I can't find your auth data. Type /auth to auth.")
+        bot.send_message(message.chat.id, "Sorry, I can't find your auth data. Type /sign_in to try again.")
         return
 
     text = message.caption
@@ -120,5 +119,13 @@ def tweet_photo_handler(message):
 
 
 if __name__ == '__main__':
-    logging.info('TeleTweet bot is running...')
+    banner = """
+▀▛▘  ▜     ▀▛▘         ▐
+ ▌▞▀▖▐ ▞▀▖  ▌▌  ▌▞▀▖▞▀▖▜▀
+ ▌▛▀ ▐ ▛▀   ▌▐▐▐ ▛▀ ▛▀ ▐ ▖
+ ▘▝▀▘ ▘▝▀▘  ▘ ▘▘ ▝▀▘▝▀▘ ▀
+ by BennyThink
+    """
+    print(f"\033[1;35m {banner}\033[0m")
+    print("\033[1;36mTeletweet is running...\033[0m")
     bot.polling(none_stop=True)

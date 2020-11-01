@@ -25,7 +25,8 @@ but it seems helpless because attack could acquire AES key in Python code if he 
 # Commands
 ```
 start - Start using it today
-auth - Go to oauth
+sign_in - Go to oauth
+sign_off - sign off
 help - What is this bot
 ```
 # Usage
@@ -52,6 +53,7 @@ cd TeleTweet
 pip3 install -r requirements.txt
 export TOKEN="BOT_TOKEN" \
  CONSUMER_KEY="key"  CONSUMER_SECRET="secret" \
+touch teletweet/database.enc
 python3 teletweet/bot.py
 ```
 ## web server
@@ -71,7 +73,7 @@ You can run using docker.
 ```shell script
 docker run -d --restart=always -e TOKEN="BOT_TOKEN" \
 -e CONSUMER_KEY="key" -e CONSUMER_SECRET="secret" \
--v `pwd`/database.json:/TeleTweet/teletweet/database.json \
+-v `pwd`/database.enc:/TeleTweet/teletweet/database.enc \
 bennythink/teletweet
 
 docker run -d --restart=always -e TOKEN="BOT_TOKEN" \
