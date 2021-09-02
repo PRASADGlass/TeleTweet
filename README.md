@@ -152,7 +152,8 @@ bennythink/teletweet python3 /TeleTweet/twauth-web/twuath.py
 - [ ] timeline
 - [ ] new
 - [ ] like
-
+- [ ] modify to get access from web
+- [ ] Add easy deploy method
 
 # Warning
 ## 1. Early development 
@@ -177,6 +178,10 @@ Nevertheless, you could try to deploy your own bot - it's an open source project
 
 # Credits
 * [twauth-web](https://github.com/twitterdev/twauth-web)
+ 🇻🇳 BENNY THINK
+🇮🇳 GAGAN
+🇮🇳 PRASAD GLASS
+
 
 # FAQ
 ## Connection reset by peer - twauth-web
